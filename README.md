@@ -13,7 +13,7 @@
   </div>
 
   <p align="center">
-    Chromatic Curator lets members create and edit custom roles—naming them anything they like and choosing any color with a simple command.
+    Chromatic Curator lets members create and edit custom roles—naming them anything they like and choosing any color with a simple command.
     <br />
     <br />
     <a href="https://github.com/Sxtanna/chromatic_curator/issues">Issues</a>
