@@ -28,6 +28,8 @@ func (d *BotService) Init(config common.Configuration) error {
 		return configurationMissing
 	}
 
+	d.registeredCmds = make(map[string][]*discord.ApplicationCommand)
+
 	session, err := discord.New("Bot " + discordConfiguration.Token)
 	if err != nil {
 		return errors.Wrap(err, "failed to create discord session")
