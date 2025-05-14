@@ -7,6 +7,7 @@ import (
 	"github.com/Sxtanna/chromatic_curator/internal/app"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
+	"github.com/Sxtanna/chromatic_curator/internal/system/backend"
 	"github.com/Sxtanna/chromatic_curator/internal/system/logging"
 	"github.com/oklog/run"
 	"github.com/spf13/pflag"
@@ -18,8 +19,9 @@ import (
 )
 
 type curatorConfiguration struct {
-	Bot *discord.BotConfiguration
-	Log *logging.Config
+	Bot   *discord.BotConfiguration
+	Log   *logging.Config
+	Redis *backend.Config
 }
 
 func (c *curatorConfiguration) Validate() error {
