@@ -5,13 +5,12 @@ go 1.24
 require (
 	emperror.dev/emperror v0.33.0
 	emperror.dev/errors v0.8.1
-	emperror.dev/handler/logur v0.5.0
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/oklog/run v1.1.0
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
-	logur.dev/adapter/zap v0.5.0
+	go.uber.org/zap/exp v0.3.0
 	logur.dev/logur v0.17.0
 )
 

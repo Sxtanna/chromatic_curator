@@ -1,18 +1,18 @@
 package app
 
 import (
+	"emperror.dev/emperror"
 	"emperror.dev/errors"
-	emp "emperror.dev/handler/logur"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
-	log "logur.dev/logur"
+	"log/slog"
 )
 
 var (
 	services = make([]Service, 0)
 )
 
-func InitializeApp(abort <-chan struct{}, logger log.Logger, handler *emp.Handler, config common.Configuration) common.Group {
+func InitializeApp(abort <-chan struct{}, logger *slog.Logger, handler emperror.ErrorHandler, config common.Configuration) common.Group {
 	group := make(common.Group, 0)
 
 	addServiceToGroup := func(service Service) {

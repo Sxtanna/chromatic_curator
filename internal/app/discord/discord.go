@@ -4,8 +4,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
 	discord "github.com/bwmarrin/discordgo"
-	log "logur.dev/logur"
-	"strings"
+	"log/slog"
 )
 
 const (
@@ -16,7 +15,7 @@ type BotService struct {
 	Bot    *discord.Session
 	Config *BotConfiguration
 
-	Logger log.Logger
+	Logger *slog.Logger
 }
 
 func (d *BotService) Init(config common.Configuration) error {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"emperror.dev/emperror"
 	"emperror.dev/errors"
-	logurhandler "emperror.dev/handler/logur"
 	"github.com/Sxtanna/chromatic_curator/internal/app"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
@@ -12,7 +11,7 @@ import (
 	"github.com/oklog/run"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"logur.dev/logur"
+	"log/slog"
 	"os"
 	"strings"
 	"syscall"
@@ -93,8 +92,8 @@ var (
 	abort chan struct{}
 
 	config common.Configuration
-	logger logur.Logger
-	handle *logurhandler.Handler
+	logger *slog.Logger
+	handle emperror.ErrorHandler
 )
 
 func main() {
@@ -114,7 +113,7 @@ func main() {
 
 	logging.SetStandardLogger(logger)
 
-	handle = logurhandler.New(logger)
+	handle = logging.NewSlogHandler(logger)
 	defer emperror.HandleRecover(handle)
 
 	initializeRunGroup()
