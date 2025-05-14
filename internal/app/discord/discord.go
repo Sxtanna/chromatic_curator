@@ -2,6 +2,7 @@ package discord
 
 import (
 	"emperror.dev/errors"
+	"github.com/Sxtanna/chromatic_curator/internal/app/discord/cmds"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
 	discord "github.com/bwmarrin/discordgo"
 	"log/slog"
@@ -16,6 +17,9 @@ type BotService struct {
 	Config *BotConfiguration
 
 	Logger *slog.Logger
+
+	commands       *cmds.Registry
+	registeredCmds map[string][]*discord.ApplicationCommand
 }
 
 func (d *BotService) Init(config common.Configuration) error {
@@ -32,50 +36,20 @@ func (d *BotService) Init(config common.Configuration) error {
 	d.Bot = session
 	d.Config = discordConfiguration
 
+	// Initialize command registry
+	d.commands = cmds.NewRegistry(d.Logger)
+
+	// Register commands
+	d.commands.RegisterCommand(cmds.NewEchoCommand())
+	d.commands.RegisterCommand(cmds.NewStatusCommand())
+
 	return nil
 }
 
 func (d *BotService) Start() error {
 	d.Bot.Identify.Intents = discord.IntentsAll
 
-	// Define slash commands
-	commands := []*discord.ApplicationCommand{
-		{
-			Name:        "status",
-			Description: "Check the system status",
-		},
-		{
-			Name:        "users",
-			Description: "Get the list of users",
-		},
-	}
-
-	d.Bot.AddHandlerOnce(func(s *discord.Session, event *discord.Connect) {
-		d.Logger.Info("Discord Session is now ready!")
-
-		// Register slash commands
-		guildID := ""
-		if d.Config != nil && d.Config.GuildID != "" {
-			guildID = d.Config.GuildID
-		}
-
-		for _, cmd := range commands {
-			_, err := s.ApplicationCommandCreate(s.State.User.ID, guildID, cmd)
-			if err != nil {
-				d.Logger.Error("Failed to create slash command", map[string]interface{}{
-					"command": cmd.Name,
-					"error":   err.Error(),
-				})
-			} else {
-				d.Logger.Info("Registered slash command", map[string]interface{}{
-					"command": cmd.Name,
-					"guild":   guildID,
-				})
-			}
-		}
-	})
-
-	d.Bot.AddHandlerOnce(func(_ *discord.Session, event *discord.Disconnect) {
+	d.Bot.AddHandlerOnce(func(s *discord.Session, event *discord.Disconnect) {
 		d.Logger.Info("Discord Session has been disconnected!")
 	})
 
@@ -85,66 +59,36 @@ func (d *BotService) Start() error {
 			return
 		}
 
+		commandName := i.ApplicationCommandData().Name
 		d.Logger.Info("Received slash command", map[string]interface{}{
-			"command": i.ApplicationCommandData().Name,
+			"command": commandName,
 		})
 
-		switch i.ApplicationCommandData().Name {
-		case "status":
-			// TODO: Implement actual status check
-			// system.System.ExecStatus()
+		// Get the command from the registry
+		cmd, exists := d.commands.GetCommand(commandName)
+		if !exists {
 			err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
 				Type: discord.InteractionResponseChannelMessageWithSource,
 				Data: &discord.InteractionResponseData{
-					Content: "System status: OK",
+					Content: "Unknown command: " + commandName,
 				},
 			})
 			if err != nil {
-				d.Logger.Error("Failed to respond to interaction", map[string]interface{}{
-					"command": i.ApplicationCommandData().Name,
+				d.Logger.Error("Failed to respond to unknown command", map[string]interface{}{
+					"command": commandName,
 					"error":   err.Error(),
 				})
 			}
-		case "users":
-			// TODO: Implement actual user list
-			// system.System.ExecGetUsers()
-			err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
-				Type: discord.InteractionResponseChannelMessageWithSource,
-				Data: &discord.InteractionResponseData{
-					Content: "User list would be displayed here",
-				},
-			})
-			if err != nil {
-				d.Logger.Error("Failed to respond to interaction", map[string]interface{}{
-					"command": i.ApplicationCommandData().Name,
-					"error":   err.Error(),
-				})
-			}
-		default:
-			err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
-				Type: discord.InteractionResponseChannelMessageWithSource,
-				Data: &discord.InteractionResponseData{
-					Content: "Unknown command",
-				},
-			})
-			if err != nil {
-				d.Logger.Error("Failed to respond to interaction", map[string]interface{}{
-					"command": i.ApplicationCommandData().Name,
-					"error":   err.Error(),
-				})
-			}
+			return
 		}
-	})
 
-	// Keep the message command handler for backward compatibility
-	d.Bot.AddHandlerOnce(func(_ *discord.Session, event *discord.MessageCreate) {
-		command := strings.TrimPrefix(event.Message.ContentWithMentionsReplaced(), "d!")
-
-		switch command {
-		case "status":
-			// system.System.ExecStatus()
-		case "users":
-			// system.System.ExecGetUsers()
+		// Execute the command
+		err := cmd.Execute(s, i, d.Logger)
+		if err != nil {
+			d.Logger.Error("Failed to execute command", map[string]interface{}{
+				"command": commandName,
+				"error":   err.Error(),
+			})
 		}
 	})
 
@@ -152,7 +96,14 @@ func (d *BotService) Start() error {
 		return errors.Wrap(err, "failed to open bot session")
 	}
 
-	d.Logger.Debug("bot session has been opened, service start complete...")
+	d.Logger.Debug("bot session has been opened, registering commands...")
+
+	// Register global commands with Discord
+	if err := d.registerCommands(""); err != nil {
+		return errors.Wrap(err, "failed to register commands")
+	}
+
+	d.Logger.Debug("commands registered, service start complete...")
 
 	return common.ServiceStartedNormallyButDoesNotBlock
 }
@@ -161,5 +112,87 @@ func (d *BotService) Close(_ error) error {
 	d.Logger.Debug("bot close requested, enabling sync events...")
 	d.Bot.SyncEvents = true
 
+	// delete global commands
+	d.deleteRegisteredCommands("")
+
 	return d.Bot.Close()
+}
+
+func (d *BotService) registerCommands(guildID string) error {
+	// Get all commands from the registry
+	commands := d.commands.GetApplicationCommands()
+
+	d.Logger.Info("Registering slash commands",
+		slog.Int("count", len(commands)),
+		slog.String("guild", guildID))
+
+	d.registeredCmds[guildID] = make([]*discord.ApplicationCommand, 0)
+
+	// Register commands with Discord
+	for _, cmd := range commands {
+		registeredCmd, err := d.Bot.ApplicationCommandCreate(d.Bot.State.User.ID, guildID, cmd)
+		if err != nil {
+			d.Logger.Error("failed to register slash command",
+				slog.String("command", cmd.Name),
+				slog.Any("error", err))
+
+			return errors.Wrap(err, "failed to register slash command")
+		}
+
+		d.registeredCmds[guildID] = append(d.registeredCmds[guildID], registeredCmd)
+
+		d.Logger.Info("registered slash command",
+			slog.String("command", cmd.Name))
+	}
+
+	return nil
+}
+
+func (d *BotService) deleteRegisteredCommands(guildID string) {
+	d.Logger.Info("deleting registered slash commands",
+		slog.String("guild", guildID))
+
+	deleteRegisteredCommand := func(guildID string, cmd *discord.ApplicationCommand) {
+		err := d.Bot.ApplicationCommandDelete(d.Bot.State.User.ID, guildID, cmd.ID)
+		if err != nil {
+			d.Logger.Error("failed to delete slash command",
+				slog.String("command", cmd.Name),
+				slog.Any("error", err))
+		} else {
+			d.Logger.Info("deleted slash command",
+				slog.String("command", cmd.Name))
+		}
+	}
+
+	// If we have tracked registered commands, use those
+	if d.registeredCmds[guildID] != nil && len(d.registeredCmds[guildID]) > 0 {
+		registeredCmds := d.registeredCmds[guildID]
+
+		d.Logger.Info("deleting tracked registered commands", map[string]interface{}{
+			"count": len(registeredCmds),
+		})
+
+		for _, cmd := range registeredCmds {
+			deleteRegisteredCommand(guildID, cmd)
+		}
+
+		// Clear the registered commands list
+		delete(d.registeredCmds, guildID)
+		return
+	}
+
+	// Fallback: fetch and delete all commands
+	commands, err := d.Bot.ApplicationCommands(d.Bot.State.User.ID, guildID)
+	if err != nil {
+		d.Logger.Error("failed to fetch slash commands",
+			slog.Any("error", err))
+		return
+	}
+
+	d.Logger.Info("deleting fetched slash commands",
+		slog.Int("count", len(commands)))
+
+	for _, cmd := range commands {
+		deleteRegisteredCommand(guildID, cmd)
+	}
 }

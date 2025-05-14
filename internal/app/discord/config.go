@@ -7,8 +7,7 @@ const (
 )
 
 type BotConfiguration struct {
-	Token   string
-	GuildID string // Optional: If provided, slash commands will be registered for this guild only
+	Token string
 }
 
 func (c *BotConfiguration) Validate() error {
