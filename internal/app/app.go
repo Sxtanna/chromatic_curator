@@ -3,6 +3,7 @@ package app
 import (
 	"emperror.dev/emperror"
 	"emperror.dev/errors"
+	"github.com/Sxtanna/chromatic_curator/internal/app/backend"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
 	"log/slog"
@@ -34,6 +35,7 @@ func InitializeApp(abort <-chan struct{}, logger *slog.Logger, handler emperror.
 		)
 	}
 
+	services = append(services, &backend.RedisBackend{})
 	services = append(services, &discord.BotService{Logger: logger})
 
 	for _, service := range services {
