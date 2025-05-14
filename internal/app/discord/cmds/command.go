@@ -59,9 +59,8 @@ func NewRegistry(logger *slog.Logger) *Registry {
 // RegisterCommand adds a command to the registry
 func (r *Registry) RegisterCommand(cmd Command) {
 	r.commands[cmd.GetName()] = cmd
-	r.logger.Info("Registered command", map[string]interface{}{
-		"command": cmd.GetName(),
-	})
+	r.logger.Info("Registered command",
+		slog.String("command", cmd.GetName()))
 }
 
 // GetCommand returns a command by name

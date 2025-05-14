@@ -168,9 +168,8 @@ func (d *BotService) deleteRegisteredCommands(guildID string) {
 	if d.registeredCmds[guildID] != nil && len(d.registeredCmds[guildID]) > 0 {
 		registeredCmds := d.registeredCmds[guildID]
 
-		d.Logger.Info("deleting tracked registered commands", map[string]interface{}{
-			"count": len(registeredCmds),
-		})
+		d.Logger.Info("deleting tracked registered commands",
+			slog.Int("count", len(registeredCmds)))
 
 		for _, cmd := range registeredCmds {
 			deleteRegisteredCommand(guildID, cmd)
