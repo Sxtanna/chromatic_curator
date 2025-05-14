@@ -4,6 +4,7 @@ import (
 	"context"
 	"emperror.dev/errors"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
+	"github.com/Sxtanna/chromatic_curator/internal/system/backend"
 	goredis "github.com/redis/go-redis/v9"
 	"strconv"
 )
@@ -17,13 +18,13 @@ type RedisBackend struct {
 }
 
 func (r *RedisBackend) Init(config common.Configuration) error {
-	redisConfiguration := common.FindConfiguration[RedisConfig](config)
+	redisConfiguration := common.FindConfiguration[backend.Config](config)
 	if redisConfiguration == nil {
 		return configurationMissing
 	}
 
 	r.client = goredis.NewClient(&goredis.Options{
-		Addr:     redisConfiguration.Redis.Host + ":" + strconv.Itoa(redisConfiguration.Redis.Port),
+		Addr:     redisConfiguration.Host + ":" + strconv.Itoa(redisConfiguration.Port),
 		Password: "",
 		DB:       0,
 	})
