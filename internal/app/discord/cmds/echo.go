@@ -51,10 +51,9 @@ func (c *EchoCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 		}
 	}
 
-	logger.Info("Executing echo command", map[string]interface{}{
-		"message":   message,
-		"ephemeral": ephemeral,
-	})
+	logger.Info("Executing echo command",
+		slog.String("message", message),
+		slog.Bool("ephemeral", ephemeral))
 
 	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

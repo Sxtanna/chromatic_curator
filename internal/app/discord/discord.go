@@ -62,9 +62,8 @@ func (d *BotService) Start() error {
 		}
 
 		commandName := i.ApplicationCommandData().Name
-		d.Logger.Info("Received slash command", map[string]interface{}{
-			"command": commandName,
-		})
+		d.Logger.Info("Received slash command",
+			slog.String("command", commandName))
 
 		// Get the command from the registry
 		cmd, exists := d.commands.GetCommand(commandName)
@@ -76,10 +75,9 @@ func (d *BotService) Start() error {
 				},
 			})
 			if err != nil {
-				d.Logger.Error("Failed to respond to unknown command", map[string]interface{}{
-					"command": commandName,
-					"error":   err.Error(),
-				})
+				d.Logger.Error("Failed to respond to unknown command",
+					slog.String("command", commandName),
+					slog.Any("error", err))
 			}
 			return
 		}
@@ -87,10 +85,9 @@ func (d *BotService) Start() error {
 		// Execute the command
 		err := cmd.Execute(s, i, d.Logger)
 		if err != nil {
-			d.Logger.Error("Failed to execute command", map[string]interface{}{
-				"command": commandName,
-				"error":   err.Error(),
-			})
+			d.Logger.Error("Failed to execute command",
+				slog.String("command", commandName),
+				slog.Any("error", err))
 		}
 	})
 
