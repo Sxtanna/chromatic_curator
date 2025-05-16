@@ -7,7 +7,7 @@ type Backend interface {
 }
 
 type RoleBackend interface {
-	GetRole(ctx context.Context, user string) (string, error)
+	GetRole(ctx context.Context, guild string, user string) (string, error)
 
-	SetRole(ctx context.Context, user string, role string) error
+	SetRole(ctx context.Context, guild string, user string, role string) error
 }

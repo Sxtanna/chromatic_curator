@@ -45,10 +45,15 @@ func (r *RedisBackend) Close(_ error) error {
 	return r.client.Close()
 }
 
-func (r *RedisBackend) GetRole(ctx context.Context, user string) (string, error) {
-	return r.client.HGet(ctx, "gamer_hoes:roles", user).Result()
+func (r *RedisBackend) GetRole(ctx context.Context, guild string, user string) (string, error) {
+	val, err := r.client.HGet(ctx, "curator:"+guild+":roles", user).Result()
+	if errors.Is(err, goredis.Nil) {
+		return "", nil
+	}
+
+	return val, err
 }
 
-func (r *RedisBackend) SetRole(ctx context.Context, user string, role string) error {
-	return r.client.HSet(ctx, "gamer_hoes:roles", user, role).Err()
+func (r *RedisBackend) SetRole(ctx context.Context, guild string, user string, role string) error {
+	return r.client.HSet(ctx, "curator:"+guild+":roles", user, role).Err()
 }
