@@ -35,8 +35,10 @@ func InitializeApp(abort <-chan struct{}, logger *slog.Logger, handler emperror.
 		)
 	}
 
-	services = append(services, &backend.RedisBackend{})
-	services = append(services, &discord.BotService{Logger: logger})
+	backendService := &backend.RedisBackend{}
+
+	services = append(services, backendService)
+	services = append(services, &discord.BotService{Logger: logger, Backend: backendService})
 
 	for _, service := range services {
 		if inits, ok := service.(InitializedService); ok {

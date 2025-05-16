@@ -4,6 +4,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord/cmds"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
+	"github.com/Sxtanna/chromatic_curator/internal/system/backend"
 	discord "github.com/bwmarrin/discordgo"
 	"log/slog"
 )
@@ -16,7 +17,8 @@ type BotService struct {
 	Bot    *discord.Session
 	Config *BotConfiguration
 
-	Logger *slog.Logger
+	Logger  *slog.Logger
+	Backend backend.Backend
 
 	commands       *cmds.Registry
 	registeredCmds map[string][]*discord.ApplicationCommand
@@ -72,6 +74,7 @@ func (d *BotService) Start() error {
 				Type: discord.InteractionResponseChannelMessageWithSource,
 				Data: &discord.InteractionResponseData{
 					Content: "Unknown command: " + commandName,
+					Flags:   discord.MessageFlagsEphemeral,
 				},
 			})
 			if err != nil {
@@ -112,7 +115,7 @@ func (d *BotService) Close(_ error) error {
 	d.Bot.SyncEvents = true
 
 	// delete global commands
-	d.deleteRegisteredCommands("")
+	// d.deleteRegisteredCommands("")
 
 	return d.Bot.Close()
 }
