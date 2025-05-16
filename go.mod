@@ -6,6 +6,7 @@ require (
 	emperror.dev/emperror v0.33.0
 	emperror.dev/errors v0.8.1
 	github.com/bwmarrin/discordgo v0.28.1
+	github.com/icza/gox v0.2.0
 	github.com/oklog/run v1.1.0
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/spf13/pflag v1.0.6
