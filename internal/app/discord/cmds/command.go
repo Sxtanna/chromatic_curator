@@ -42,6 +42,16 @@ func (c *BaseCommand) GetOptions() []*discordgo.ApplicationCommandOption {
 	return c.Options
 }
 
+func GetOptionByName(i *discordgo.Interaction, name string) *discordgo.ApplicationCommandInteractionDataOption {
+	for _, option := range i.ApplicationCommandData().Options {
+		if option.Name == name {
+			return option
+		}
+	}
+
+	return nil
+}
+
 // Registry manages all available commands
 type Registry struct {
 	commands map[string]Command
