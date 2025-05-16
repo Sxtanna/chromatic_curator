@@ -7,6 +7,7 @@ import (
 	"github.com/Sxtanna/chromatic_curator/internal/system/backend"
 	discord "github.com/bwmarrin/discordgo"
 	"log/slog"
+	"slices"
 )
 
 const (
@@ -44,8 +45,7 @@ func (d *BotService) Init(config common.Configuration) error {
 	d.commands = cmds.NewRegistry(d.Logger)
 
 	// Register commands
-	d.commands.RegisterCommand(cmds.NewEchoCommand())
-	d.commands.RegisterCommand(cmds.NewStatusCommand())
+	d.commands.RegisterCommand(cmds.NewRoleCommand(d.Backend, func(id string) bool { return slices.Contains(d.Config.Admins, id) }))
 
 	return nil
 }
