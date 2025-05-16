@@ -1,0 +1,7 @@
+name: curator
+
+services:
+  curator:
+    container_name: curator
+    image: curator:latest
+    restart: unless-stopped
