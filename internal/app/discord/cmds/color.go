@@ -3,44 +3,15 @@ package cmds
 import (
 	"bytes"
 	"fmt"
+	"github.com/Sxtanna/chromatic_curator/internal/app/discord/data"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
 	"github.com/Sxtanna/chromatic_curator/internal/system/imaging"
 	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
 	"log/slog"
 	"math/rand/v2"
 	"strconv"
 	"strings"
-	"sync"
 )
-
-type ColorGeneration struct {
-	Input     string
-	ColorName string
-	ColorInt  int
-	ImageData []byte
-	Embed     *discordgo.MessageEmbed
-	TempMsgID string
-}
-
-// Global cache for storing color images
-var (
-	ColorImageCache      = make(map[string]*ColorGeneration)
-	ColorImageCacheMutex sync.RWMutex
-)
-
-// StoreColorImage stores an image in the cache with the given ID
-func StoreColorImage(gen *ColorGeneration) string {
-	// Generate a UUID for the image
-	id := uuid.New().String()
-
-	// Store the image in the cache
-	ColorImageCacheMutex.Lock()
-	ColorImageCache[id] = gen
-	ColorImageCacheMutex.Unlock()
-
-	return id
-}
 
 // ColorCommand represents a command to preview colors
 type ColorCommand struct {
@@ -106,7 +77,7 @@ func (c *ColorCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 		})
 	}
 
-	generation := &ColorGeneration{
+	generation := &data.ColorGeneration{
 		Input:     colorOption.StringValue(),
 		ColorName: colorName,
 		ColorInt:  colorInt,
@@ -174,7 +145,7 @@ func (c *ColorCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	generation.Embed = generateColorGenerationEmbed(generation, similarColors, randomColors)
 
 	// Generate a UUID for the image and store it in the cache
-	imageID := StoreColorImage(generation)
+	imageID := data.SaveGeneration(generation)
 
 	// Create a custom ID for the share button that includes the UUID
 	shareButtonID := fmt.Sprintf("share_color:%s", imageID)
@@ -212,7 +183,7 @@ func (c *ColorCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	return nil
 }
 
-func generateColorGenerationEmbed(generation *ColorGeneration, similarColors []common.ColorDistance, randomColors bool) *discordgo.MessageEmbed {
+func generateColorGenerationEmbed(generation *data.ColorGeneration, similarColors []common.ColorDistance, randomColors bool) *discordgo.MessageEmbed {
 	// Convert the int color to RGB
 	r, g, b := common.IntToRGB(generation.ColorInt)
 

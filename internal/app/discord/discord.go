@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"emperror.dev/errors"
 	"github.com/Sxtanna/chromatic_curator/internal/app/discord/cmds"
+	"github.com/Sxtanna/chromatic_curator/internal/app/discord/data"
 	"github.com/Sxtanna/chromatic_curator/internal/common"
 	"github.com/Sxtanna/chromatic_curator/internal/system/backend"
 	discord "github.com/bwmarrin/discordgo"
@@ -121,16 +122,14 @@ func (d *BotService) Start() error {
 
 			imageID := parts[1]
 
-			// Retrieve the image from the cache
-			cmds.ColorImageCacheMutex.RLock()
-			generation, exists := cmds.ColorImageCache[imageID]
-			cmds.ColorImageCacheMutex.RUnlock()
+		// Retrieve the image from the cache
+		generation := data.FindGeneration(imageID)
 
-			if !exists {
-				d.Logger.Error("Image not found in cache",
-					slog.String("imageID", imageID))
-				return
-			}
+		if generation == nil {
+			d.Logger.Error("Image not found in cache",
+				slog.String("imageID", imageID))
+			return
+		}
 
 			// Acknowledge the interaction
 			err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
