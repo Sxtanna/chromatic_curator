@@ -148,10 +148,19 @@ func (d *BotService) Start() error {
 			},
 		})
 
-			if err != nil {
-				d.Logger.Error("Failed to respond to button interaction",
-					slog.Any("error", err))
-			}
+		if err != nil {
+			d.Logger.Error("Failed to respond to button interaction",
+				slog.Any("error", err))
+
+			empty := make([]discord.MessageComponent, 0)
+
+			_, err = s.FollowupMessageEdit(i.Interaction, generation.TempMsgID, &discord.WebhookEdit{Components: &empty})
+
+			d.Logger.Error("Failed to remove button interaction",
+				slog.Any("error", err))
+
+			return
+		}
 
 		err = s.FollowupMessageDelete(i.Interaction, generation.TempMsgID)
 		if err != nil {
