@@ -80,7 +80,7 @@ func GenerateColorImage(mainColor int, similarColors []common.ColorDistance) ([]
 			}
 
 			// Draw the index number directly on the color square
-			DrawDigit(imageData, i+1, x+ALTS_COLOR_SIZE/2, y+ALTS_COLOR_SIZE/2, textColor)
+			DrawNumber(imageData, i+1, x+ALTS_COLOR_SIZE/2, y+ALTS_COLOR_SIZE/2, textColor)
 		}
 	}
 
