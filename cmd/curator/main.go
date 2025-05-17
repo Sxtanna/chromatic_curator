@@ -46,6 +46,11 @@ func initializeConfiguration(v *viper.Viper, f *pflag.FlagSet) {
 	v.AllowEmptyEnv(true)
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	v.AutomaticEnv()
+
+	_ = v.BindEnv("bot.token", "BOT_TOKEN")
+	_ = v.BindEnv("bot.admins", "BOT_ADMINS")
+	_ = v.BindEnv("redis.host", "REDIS_HOST")
+	_ = v.BindEnv("redis.port", "REDIS_PORT")
 }
 
 func readPFlags(f *pflag.FlagSet) error {
@@ -65,7 +70,11 @@ func readConfig(v *viper.Viper) error {
 		return errors.Wrap(err, "failed to read config")
 	}
 
-	var conf curatorConfiguration
+	conf := curatorConfiguration{
+		Bot:   &discord.BotConfiguration{},
+		Log:   &logging.Config{},
+		Redis: &backend.Config{},
+	}
 
 	if err = v.Unmarshal(&conf); err != nil {
 		return errors.Wrap(err, "failed to unmarshal config")
