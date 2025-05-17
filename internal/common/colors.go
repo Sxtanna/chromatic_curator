@@ -3,12 +3,22 @@ package common
 import (
 	"emperror.dev/errors"
 	"github.com/icza/gox/imagex/colorx"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func RGBToInt(r, g, b uint8) int {
 	return int(r)<<16 | int(g)<<8 | int(b)
+}
+
+func IntToRGB(color int) (r uint8, g uint8, b uint8) {
+	return uint8((color >> 16) & 0xFF), uint8((color >> 8) & 0xFF), uint8(color & 0xFF)
+}
+
+func SlightlyDarker(ir, ig, ib uint8) (r uint8, g uint8, b uint8) {
+	return uint8(max(0, int(r)-40)), uint8(max(0, int(g)-40)), uint8(max(0, int(b)-40))
 }
 
 func ParseTextToColorInt(input string) (int, error) {
@@ -39,6 +49,52 @@ func ParseTextToColorInt(input string) (int, error) {
 	}
 
 	return 0, errors.New("could not parse color")
+}
+
+// ColorDistance represents a color with its distance from a reference color
+type ColorDistance struct {
+	Name     string
+	ColorInt int
+	Distance float64
+}
+
+// FindSimilarColors finds colors similar to the given color
+func FindSimilarColors(colorInt int, count int) []ColorDistance {
+	// Convert the int color to RGB
+	r1, g1, b1 := IntToRGB(colorInt)
+
+	// Calculate distance for all colors
+	distances := make([]ColorDistance, 0, len(ColorsAndNames))
+	for _, item := range ColorsAndNames {
+		// Skip if it's the same color
+		itemColorInt, err := ParseTextToColorInt(item.Color)
+		if err != nil || itemColorInt == colorInt {
+			continue
+		}
+
+		// Convert the item color to RGB
+		r2, g2, b2 := IntToRGB(itemColorInt)
+
+		// Calculate Euclidean distance in RGB space
+		distance := math.Sqrt(math.Pow(float64(r2)-float64(r1), 2) + math.Pow(float64(g2)-float64(g1), 2) + math.Pow(float64(b2)-float64(b1), 2))
+
+		distances = append(distances, ColorDistance{
+			Name:     item.Name,
+			ColorInt: itemColorInt,
+			Distance: distance,
+		})
+	}
+
+	// Sort by distance
+	sort.Slice(distances, func(i, j int) bool {
+		return distances[i].Distance < distances[j].Distance
+	})
+
+	// Return the closest colors (up to count)
+	if count > len(distances) {
+		count = len(distances)
+	}
+	return distances[:count]
 }
 
 type item struct {
