@@ -9,6 +9,84 @@ import (
 	"strings"
 )
 
+// PaletteType represents the type of color palette
+type PaletteType int
+
+const (
+	// PaletteTypeMonochromatic represents a monochromatic color palette
+	PaletteTypeMonochromatic PaletteType = iota
+	// PaletteTypeComplementary represents a complementary color palette
+	PaletteTypeComplementary
+	// PaletteTypeSplitComplementary represents a split complementary color palette
+	PaletteTypeSplitComplementary
+	// PaletteTypeAnalogous represents an analogous color palette
+	PaletteTypeAnalogous
+	// PaletteTypeTriadic represents a triadic color palette
+	PaletteTypeTriadic
+	// PaletteTypeTetradic represents a tetradic color palette
+	PaletteTypeTetradic
+)
+
+// String returns the string representation of the palette type
+func (p PaletteType) String() string {
+	switch p {
+	case PaletteTypeMonochromatic:
+		return "monochromatic"
+	case PaletteTypeComplementary:
+		return "complementary"
+	case PaletteTypeSplitComplementary:
+		return "split_complementary"
+	case PaletteTypeAnalogous:
+		return "analogous"
+	case PaletteTypeTriadic:
+		return "triadic"
+	case PaletteTypeTetradic:
+		return "tetradic"
+	default:
+		return "unknown"
+	}
+}
+
+// DisplayName returns a formatted display name for the palette type
+func (p PaletteType) DisplayName() string {
+	switch p {
+	case PaletteTypeMonochromatic:
+		return "Monochromatic"
+	case PaletteTypeComplementary:
+		return "Complementary"
+	case PaletteTypeSplitComplementary:
+		return "Split Complementary"
+	case PaletteTypeAnalogous:
+		return "Analogous"
+	case PaletteTypeTriadic:
+		return "Triadic"
+	case PaletteTypeTetradic:
+		return "Tetradic"
+	default:
+		return "Unknown"
+	}
+}
+
+// PaletteTypeFromString converts a string to a PaletteType
+func PaletteTypeFromString(s string) (PaletteType, error) {
+	switch s {
+	case "monochromatic":
+		return PaletteTypeMonochromatic, nil
+	case "complementary":
+		return PaletteTypeComplementary, nil
+	case "split_complementary":
+		return PaletteTypeSplitComplementary, nil
+	case "analogous":
+		return PaletteTypeAnalogous, nil
+	case "triadic":
+		return PaletteTypeTriadic, nil
+	case "tetradic":
+		return PaletteTypeTetradic, nil
+	default:
+		return PaletteTypeMonochromatic, errors.Errorf("unknown palette type: %s", s)
+	}
+}
+
 func RGBToInt(r, g, b uint8) int {
 	return int(r)<<16 | int(g)<<8 | int(b)
 }
