@@ -8,7 +8,7 @@ const (
 
 type BotConfiguration struct {
 	Token  string
-	Admins []string
+	Admins string
 }
 
 func (c *BotConfiguration) Validate() error {
