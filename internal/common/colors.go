@@ -175,6 +175,75 @@ func FindSimilarColors(colorInt int, count int) []ColorDistance {
 	return distances[:count]
 }
 
+// RGBToHSV converts RGB to HSV
+func RGBToHSV(r, g, b uint8) (h, s, v float64) {
+	red := float64(r) / 255
+	green := float64(g) / 255
+	blue := float64(b) / 255
+
+	max := math.Max(math.Max(red, green), blue)
+	min := math.Min(math.Min(red, green), blue)
+	delta := max - min
+
+	// Calculate hue
+	if delta == 0 {
+		h = 0
+	} else if max == red {
+		h = 60 * ((green - blue) / delta)
+		if green < blue {
+			h += 360
+		}
+	} else if max == green {
+		h = 60 * ((blue-red)/delta + 2)
+	} else {
+		h = 60 * ((red-green)/delta + 4)
+	}
+
+	// Calculate saturation
+	if max == 0 {
+		s = 0
+	} else {
+		s = delta / max
+	}
+
+	// Calculate value
+	v = max
+
+	return h, s, v
+}
+
+// HSVToRGB converts HSV to RGB
+func HSVToRGB(h, s, v float64) (r, g, b uint8) {
+	// Ensure h is in the range [0, 360)
+	h = math.Mod(h, 360)
+	if h < 0 {
+		h += 360
+	}
+
+	c := v * s
+	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
+	m := v - c
+
+	var r1, g1, b1 float64
+
+	switch {
+	case h < 60:
+		r1, g1, b1 = c, x, 0
+	case h < 120:
+		r1, g1, b1 = x, c, 0
+	case h < 180:
+		r1, g1, b1 = 0, c, x
+	case h < 240:
+		r1, g1, b1 = 0, x, c
+	case h < 300:
+		r1, g1, b1 = x, 0, c
+	default:
+		r1, g1, b1 = c, 0, x
+	}
+
+	return uint8((r1 + m) * 255), uint8((g1 + m) * 255), uint8((b1 + m) * 255)
+}
+
 type item struct {
 	Color string
 	Name  string
