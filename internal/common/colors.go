@@ -2,6 +2,7 @@ package common
 
 import (
 	"emperror.dev/errors"
+	"fmt"
 	"github.com/icza/gox/imagex/colorx"
 	"math"
 	"sort"
@@ -134,6 +135,53 @@ type ColorDistance struct {
 	Name     string
 	ColorInt int
 	Distance float64
+}
+
+// FindExactOrClosestNamedColor finds the exact match for a color by hex code if possible,
+// otherwise returns the closest named color
+func FindExactOrClosestNamedColor(r, g, b uint8) ColorDistance {
+	// Create hex code for the input color
+	hexCode := fmt.Sprintf("%02X%02X%02X", r, g, b)
+
+	// First try to find an exact match by hex code
+	for _, item := range ColorsAndNames {
+		if strings.EqualFold(item.Color, hexCode) {
+			return ColorDistance{
+				Name:     item.Name,
+				ColorInt: RGBToInt(r, g, b),
+				Distance: 0, // Exact match has zero distance
+			}
+		}
+	}
+
+	// If no exact match, find the closest color
+	minDistance := math.MaxFloat64
+	var closestColor ColorDistance
+
+	for _, item := range ColorsAndNames {
+		itemColorInt, err := ParseTextToColorInt(item.Color)
+		if err != nil {
+			continue
+		}
+
+		r2, g2, b2 := IntToRGB(itemColorInt)
+
+		// Calculate Euclidean distance in RGB space
+		distance := math.Sqrt(math.Pow(float64(r2)-float64(r), 2) +
+			math.Pow(float64(g2)-float64(g), 2) +
+			math.Pow(float64(b2)-float64(b), 2))
+
+		if distance < minDistance {
+			minDistance = distance
+			closestColor = ColorDistance{
+				Name:     item.Name + "*",
+				ColorInt: RGBToInt(r, g, b),
+				Distance: distance,
+			}
+		}
+	}
+
+	return closestColor
 }
 
 // FindSimilarColors finds colors similar to the given color
