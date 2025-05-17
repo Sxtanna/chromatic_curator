@@ -107,20 +107,23 @@ func (d *BotService) Start() error {
 		customID := i.MessageComponentData().CustomID
 
 		// Check if this is a share color button
-		if strings.HasPrefix(customID, "share_color:") {
-			d.Logger.Info("Received share color button click",
+		if !strings.HasPrefix(customID, "share_color:") {
+			return
+		}
+
+		d.Logger.Info("Received share color button click",
+			slog.String("customID", customID))
+
+		// Parse the custom ID to get the image ID
+		// Format: share_color:<uuid>
+		parts := strings.Split(customID, ":")
+		if len(parts) != 2 {
+			d.Logger.Error("Invalid custom ID format",
 				slog.String("customID", customID))
+			return
+		}
 
-			// Parse the custom ID to get the image ID
-			// Format: share_color:<uuid>
-			parts := strings.Split(customID, ":")
-			if len(parts) != 2 {
-				d.Logger.Error("Invalid custom ID format",
-					slog.String("customID", customID))
-				return
-			}
-
-			imageID := parts[1]
+		imageID := parts[1]
 
 		// Retrieve the image from the cache
 		generation := data.FindGeneration(imageID)
@@ -131,30 +134,29 @@ func (d *BotService) Start() error {
 			return
 		}
 
-			// Acknowledge the interaction
-			err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
-				Type: discord.InteractionResponseChannelMessageWithSource,
-				Data: &discord.InteractionResponseData{
-					Embeds: []*discord.MessageEmbed{generation.Embed},
-					Files: []*discord.File{
-						{
-							Name:   "color_preview.png",
-							Reader: bytes.NewReader(generation.ImageData),
-						},
+		// Acknowledge the interaction
+		err := s.InteractionRespond(i.Interaction, &discord.InteractionResponse{
+			Type: discord.InteractionResponseChannelMessageWithSource,
+			Data: &discord.InteractionResponseData{
+				Embeds: []*discord.MessageEmbed{generation.Embed},
+				Files: []*discord.File{
+					{
+						Name:   "color_preview.png",
+						Reader: bytes.NewReader(generation.ImageData),
 					},
 				},
-			})
+			},
+		})
 
 			if err != nil {
 				d.Logger.Error("Failed to respond to button interaction",
 					slog.Any("error", err))
 			}
 
-			err = s.FollowupMessageDelete(i.Interaction, generation.TempMsgID)
-			if err != nil {
-				d.Logger.Error("Failed to delete temp message",
-					slog.Any("error", err))
-			}
+		err = s.FollowupMessageDelete(i.Interaction, generation.TempMsgID)
+		if err != nil {
+			d.Logger.Error("Failed to delete temp message",
+				slog.Any("error", err))
 		}
 	})
 
