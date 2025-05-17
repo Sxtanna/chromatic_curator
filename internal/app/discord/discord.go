@@ -46,6 +46,7 @@ func (d *BotService) Init(config common.Configuration) error {
 
 	// Register commands
 	d.commands.RegisterCommand(cmds.NewRoleCommand(d.Backend, func(id string) bool { return slices.Contains(d.Config.Admins, id) }))
+	d.commands.RegisterCommand(cmds.NewColorCommand())
 
 	return nil
 }
